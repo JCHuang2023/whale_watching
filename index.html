@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>走啦去賞鯨🐳</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-checkbox:checked + label {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .payer-radio:checked + label {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(4px);
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:active {
+            background-color: #1d4ed8;
+            transform: scale(0.98);
+        }
+        /* 確保所有類型的輸入框寬度表現一致 */
+        input[type="date"], input[type="time"], input[type="text"], input[type="number"], textarea {
+            width: 100% !important;
+            box-sizing: border-box;
+            display: block;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-32 text-slate-700">
+
+    <!-- 頂部標題列 -->
+    <header class="bg-white border-b border-slate-100 sticky top-0 z-50 px-6 py-4 shadow-sm text-center">
+        <div class="max-w-2xl mx-auto flex items-center justify-center gap-2">
+            <div class="bg-blue-600 p-1.5 rounded-lg shadow-md shadow-blue-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+            </div>
+            <h1 class="text-xl font-black text-slate-800 tracking-tight">走啦去賞鯨🐳</h1>
+        </div>
+    </header>
+
+    <!-- 分頁：行程規畫 -->
+    <main id="itineraryTab" class="tab-content active px-6 py-4 max-w-2xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-black text-slate-800">我的行程表</h2>
+            <button onclick="toggleModal(true)" class="btn-primary text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-1 shadow-lg shadow-blue-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                新增行程
+            </button>
+        </div>
+        <div id="itineraryList" class="space-y-10 pb-10"></div>
+        <button onclick="clearItinerary()" id="clearBtn" class="w-full py-4 text-sm text-slate-400 font-bold hidden hover:text-rose-400 transition-colors">清空全部行程計畫</button>
+    </main>
+
+    <!-- 新增行程彈窗 (Modal) -->
+    <div id="itineraryModal" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center">
+        <div class="modal-overlay absolute inset-0" onclick="toggleModal(false)"></div>
+        <div class="relative bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl w-full max-w-md mx-auto transform transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            <h2 class="text-xl font-black mb-6 text-slate-800">📍 新增目的地</h2>
+            <div class="space-y-5">
+                <div class="w-full">
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase tracking-widest px-1">日期</label>
+                    <input type="date" id="itemDate" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-base outline-none focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div class="w-full">
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase tracking-widest px-1">時間</label>
+                    <input type="time" id="itemTime" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-base outline-none focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div class="w-full">
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase tracking-widest px-1">名稱</label>
+                    <input type="text" id="itemName" placeholder="例如：花蓮港賞鯨" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-base outline-none focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div class="w-full">
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase tracking-widest px-1">地點</label>
+                    <input type="text" id="itemLocation" placeholder="Google 地圖搜尋關鍵字" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-base outline-none focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div class="w-full">
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase tracking-widest px-1">行程備註</label>
+                    <textarea id="itemNote" rows="3" placeholder="補充說明或提醒..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-base outline-none focus:ring-2 focus:ring-blue-100"></textarea>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-base">取消</button>
+                    <button onclick="addItem()" class="flex-[2] py-4 btn-primary text-white rounded-2xl font-bold text-base shadow-lg shadow-blue-100">加入行程</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分頁：帳務分帳 -->
+    <main id="billingTab" class="tab-content px-6 py-4 space-y-6 max-w-2xl mx-auto">
+        <section class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <h2 class="text-lg font-black mb-5 flex items-center gap-2 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                    <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
+                </svg>
+                新增一筆費用
+            </h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase">支出日期</label>
+                    <input type="date" id="expenseDate" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-100 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase">支出項目</label>
+                    <input type="text" id="expenseName" placeholder="例如：晚餐、計程車" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-100 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-400 mb-1 uppercase">金額 (TWD)</label>
+                    <input type="number" id="expenseAmount" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-100 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black text-slate-400 mb-2 uppercase tracking-wider">誰付的錢？ (付款人)</label>
+                    <div class="grid grid-cols-3 gap-2" id="payerChecklist"></div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-wider">哪些旅伴要分攤？</label>
+                        <button onclick="toggleSelectAll()" class="text-xs font-black text-blue-600 px-3 py-1.5 bg-blue-50 rounded-xl">全選 / 取消</button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2" id="memberChecklist"></div>
+                </div>
+
+                <button onclick="addExpense()" class="w-full btn-primary text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-100">記錄支出</button>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm pb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-black text-slate-800">帳務明細</h2>
+                <button onclick="resetExpenses()" class="text-xs text-slate-400 font-bold hover:text-rose-500 transition-colors">清空帳務</button>
+            </div>
+            <div id="expenseHistory" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-black text-slate-800">結算統計</h2>
+                <span class="text-xs bg-slate-100 text-slate-400 px-3 py-1 rounded-full font-black">自動抵銷預付</span>
+            </div>
+            <div id="memberTotals" class="space-y-3"></div>
+            
+            <div id="paymentSuggestionsContainer" class="mt-8 pt-6 border-t border-dashed border-slate-200 hidden">
+                <label class="block text-xs font-black text-slate-400 mb-4 uppercase tracking-widest">建議轉帳路徑</label>
+                <div id="paymentSuggestions" class="space-y-3"></div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-slate-100 flex justify-between items-center">
+                <span class="text-sm font-black text-slate-400">旅行總支出</span>
+                <span class="text-xl font-black text-blue-600" id="totalExpDisplay">TWD 0</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部導航 -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 pt-3 pb-8 flex justify-around items-center z-[80] shadow-sm">
+        <button onclick="switchTab('itinerary')" id="nav-itinerary" class="flex flex-col items-center gap-1 text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="text-xs font-black">行程規畫</span>
+        </button>
+        <button onclick="switchTab('billing')" id="nav-billing" class="flex flex-col items-center gap-1 text-slate-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="text-xs font-black">分帳工具</span>
+        </button>
+    </nav>
+
+    <script>
+        let members = [
+            { id: 1, name: "JC Huang", balance: 0 },
+            { id: 2, name: "Jessie淑敏", balance: 0 },
+            { id: 3, name: "Joan", balance: 0 },
+            { id: 4, name: "Tiffany", balance: 0 },
+            { id: 5, name: "Wendy Zhang", balance: 0 },
+            { id: 6, name: "宜茹", balance: 0 },
+            { id: 7, name: "慶生", balance: 0 },
+            { id: 8, name: "雪鳳", balance: 0 }
+        ];
+        let itinerary = [];
+        let expenseLogs = []; 
+
+        window.onload = () => {
+            const today = new Date();
+            document.getElementById('itemDate').valueAsDate = today;
+            document.getElementById('expenseDate').valueAsDate = today;
+            refreshMemberUI();
+            updateItineraryUI();
+            recalculateTotals();
+        };
+
+        function toggleModal(show) {
+            const modal = document.getElementById('itineraryModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function switchTab(tab) {
+            document.getElementById('itineraryTab').classList.toggle('active', tab === 'itinerary');
+            document.getElementById('billingTab').classList.toggle('active', tab === 'billing');
+            document.getElementById('nav-itinerary').className = `flex flex-col items-center gap-1 ${tab === 'itinerary' ? 'text-blue-600' : 'text-slate-300'}`;
+            document.getElementById('nav-billing').className = `flex flex-col items-center gap-1 ${tab === 'billing' ? 'text-blue-600' : 'text-slate-300'}`;
+            window.scrollTo(0, 0);
+        }
+
+        function refreshMemberUI() {
+            const checklist = document.getElementById('memberChecklist');
+            const payerlist = document.getElementById('payerChecklist');
+            
+            if(checklist) checklist.innerHTML = members.map(m => `
+                <div class="relative">
+                    <input type="checkbox" id="mCheck-${m.id}" class="custom-checkbox hidden" checked>
+                    <label for="mCheck-${m.id}" class="block text-center py-3 border border-slate-200 rounded-2xl text-[11px] cursor-pointer hover:border-blue-300 transition-all truncate px-1 font-black">
+                        ${m.name}
+                    </label>
+                </div>
+            `).join('');
+
+            if(payerlist) payerlist.innerHTML = members.map((m, idx) => `
+                <div class="relative">
+                    <input type="radio" name="payerRadio" id="payer-${m.id}" value="${m.id}" class="payer-radio hidden" ${idx === 0 ? 'checked' : ''}>
+                    <label for="payer-${m.id}" class="block text-center py-3 border border-slate-200 rounded-2xl text-[11px] cursor-pointer hover:border-emerald-300 transition-all truncate px-1 font-black">
+                        ${m.name}
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        let allSelected = true;
+        function toggleSelectAll() {
+            allSelected = !allSelected;
+            members.forEach(m => {
+                const el = document.getElementById(`mCheck-${m.id}`);
+                if (el) el.checked = allSelected;
+            });
+        }
+
+        function addExpense() {
+            const date = document.getElementById('expenseDate').value;
+            const name = document.getElementById('expenseName').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const payerId = parseInt(document.querySelector('input[name="payerRadio"]:checked')?.value);
+            
+            if (!date || !name || isNaN(amount) || amount <= 0) return;
+            const participants = members.filter(m => document.getElementById(`mCheck-${m.id}`)?.checked);
+            if (participants.length === 0) return;
+
+            const perPerson = amount / participants.length;
+            const payerName = members.find(m => m.id === payerId).name;
+
+            expenseLogs.push({
+                id: Date.now(),
+                date, name, amount, perPerson, payerId, payerName,
+                involvedNames: participants.map(p => p.name),
+                involvedIds: participants.map(p => p.id)
+            });
+
+            recalculateTotals();
+            document.getElementById('expenseName').value = "";
+            document.getElementById('expenseAmount').value = "";
+        }
+
+        function deleteExpense(id) {
+            expenseLogs = expenseLogs.filter(l => l.id !== id);
+            recalculateTotals();
+        }
+
+        function resetExpenses() {
+            expenseLogs = [];
+            recalculateTotals();
+        }
+
+        function recalculateTotals() {
+            members.forEach(m => m.balance = 0);
+            expenseLogs.forEach(log => {
+                const payer = members.find(m => m.id === log.payerId);
+                if (payer) payer.balance += log.amount;
+                log.involvedIds.forEach(id => {
+                    const consumer = members.find(m => m.id === id);
+                    if (consumer) consumer.balance -= log.perPerson;
+                });
+            });
+            renderBillingUI();
+        }
+
+        function renderBillingUI() {
+            const history = document.getElementById('expenseHistory');
+            const totals = document.getElementById('memberTotals');
+            const totalDisplay = document.getElementById('totalExpDisplay');
+            
+            if (expenseLogs.length === 0) {
+                history.innerHTML = `<div class="text-center py-10 text-slate-300 text-sm font-medium bg-slate-50 rounded-2xl border border-dashed border-slate-200">尚無帳務明細</div>`;
+            } else {
+                history.innerHTML = expenseLogs.map(log => `
+                    <div class="bg-slate-50 p-5 rounded-[2rem] border border-slate-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">${log.date}</span>
+                                <h3 class="font-black text-slate-800 text-lg">${log.name}</h3>
+                                <p class="text-xs text-slate-400 font-bold">由 ${log.payerName} 付款 TWD ${log.amount.toLocaleString()}</p>
+                            </div>
+                            <button onclick="deleteExpense(${log.id})" class="p-2 text-slate-300 hover:text-rose-500">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                `).reverse().join('');
+            }
+
+            let grandTotal = 0;
+            expenseLogs.forEach(l => grandTotal += l.amount);
+            totalDisplay.innerText = `TWD ${Math.round(grandTotal).toLocaleString()}`;
+            
+            totals.innerHTML = members.map(m => {
+                const color = m.balance > 0.01 ? 'text-emerald-600' : (m.balance < -0.01 ? 'text-rose-500' : 'text-slate-400');
+                return `
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <span class="text-base font-black text-slate-700">${m.name}</span>
+                    <span class="text-lg font-black ${color}">${Math.round(m.balance).toLocaleString()}</span>
+                </div>
+                `;
+            }).join('');
+            calculateSuggestions();
+        }
+
+        function calculateSuggestions() {
+            const container = document.getElementById('paymentSuggestions');
+            const wrapper = document.getElementById('paymentSuggestionsContainer');
+            let creditors = [], debtors = [];
+            members.forEach(m => {
+                if (m.balance > 0.01) creditors.push({ name: m.name, amount: m.balance });
+                else if (m.balance < -0.01) debtors.push({ name: m.name, amount: Math.abs(m.balance) });
+            });
+            if (debtors.length === 0) { wrapper.classList.add('hidden'); return; }
+            wrapper.classList.remove('hidden');
+            let res = "";
+            let i = 0, j = 0;
+            while (i < debtors.length && j < creditors.length) {
+                let amount = Math.min(debtors[i].amount, creditors[j].amount);
+                res += `
+                <div class="flex items-center justify-between bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                    <span class="text-sm font-black text-slate-800">${debtors[i].name} ➔ ${creditors[j].name}</span>
+                    <span class="text-sm font-black text-slate-800">TWD ${Math.round(amount).toLocaleString()}</span>
+                </div>`;
+                debtors[i].amount -= amount;
+                creditors[j].amount -= amount;
+                if (debtors[i].amount < 0.01) i++;
+                if (creditors[j].amount < 0.01) j++;
+            }
+            container.innerHTML = res;
+        }
+
+        function addItem() {
+            const date = document.getElementById('itemDate').value;
+            const timeRaw = document.getElementById('itemTime').value;
+            let timeDisplay = "全天";
+            
+            if(timeRaw) {
+                const [h, m] = timeRaw.split(':');
+                const hour = parseInt(h);
+                const period = hour < 12 ? '上午' : '下午';
+                const h12 = hour % 12 || 12;
+                timeDisplay = `${period}${h12}:${m}`;
+            }
+
+            const name = document.getElementById('itemName').value;
+            const location = document.getElementById('itemLocation').value;
+            const note = document.getElementById('itemNote').value;
+            if (!date || !name) return;
+            itinerary.push({ id: Date.now(), date, time: timeDisplay, name, location: location || name, note });
+            updateItineraryUI();
+            toggleModal(false);
+            document.getElementById('itemName').value = "";
+            document.getElementById('itemLocation').value = "";
+            document.getElementById('itemNote').value = "";
+        }
+
+        function deleteItem(id) {
+            itinerary = itinerary.filter(i => i.id !== id);
+            updateItineraryUI();
+        }
+
+        function clearItinerary() {
+            itinerary = [];
+            updateItineraryUI();
+        }
+
+        function updateItineraryUI() {
+            const container = document.getElementById('itineraryList');
+            const clearBtn = document.getElementById('clearBtn');
+            if (itinerary.length === 0) {
+                container.innerHTML = `<div class="text-center py-24 bg-white rounded-[2.5rem] border border-dashed border-slate-200 text-slate-300 text-base font-bold">目前的行程表是空的</div>`;
+                clearBtn.classList.add('hidden');
+                return;
+            }
+            clearBtn.classList.remove('hidden');
+            const grouped = itinerary.reduce((groups, item) => {
+                if (!groups[item.date]) groups[item.date] = [];
+                groups[item.date].push(item);
+                return groups;
+            }, {});
+            const sortedDates = Object.keys(grouped).sort();
+            let html = '';
+            sortedDates.forEach(date => {
+                html += `<div class="space-y-4"><div class="flex items-center gap-3"><span class="bg-blue-600 text-white text-xs font-black px-5 py-2 rounded-full shadow-lg">${date}</span><div class="h-px bg-slate-200 flex-1"></div></div>`;
+                grouped[date].forEach(item => {
+                    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(item.location)}`;
+                    html += `
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-md">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-base font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">${item.time}</span>
+                            <button onclick="deleteItem(${item.id})" class="p-1 text-slate-300 hover:text-rose-500">
+                                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2 mb-2">
+                            <span class="font-black text-slate-800 text-2xl">${item.name}</span>
+                            <a href="${mapsUrl}" target="_blank" class="inline-flex items-center gap-1 text-base font-black text-blue-600 bg-blue-50/50 px-3 py-1 rounded-lg border border-blue-50">🗺️查看地點</a>
+                        </div>
+                        ${item.note ? `<p class="text-base font-bold text-slate-500 mt-3 pt-3 border-t border-slate-50">${item.note}</p>` : ''}
+                    </div>`;
+                });
+                html += `</div>`;
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
